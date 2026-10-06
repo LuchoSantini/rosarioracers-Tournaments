@@ -27,6 +27,7 @@ import Flag from '../components/Flag';
 import LiveDot from '../components/LiveDot';
 import ManageTabs from '../components/ManageTabs';
 import PageBackground from '../components/PageBackground';
+import SiteFooter from '../components/SiteFooter';
 import PanelCard from '../components/PanelCard';
 import TournamentDetailDialog from '../components/TournamentDetailDialog';
 
@@ -280,6 +281,8 @@ export default function TournamentsPage() {
           )}
         </PanelCard>
       </Box>
+
+      <SiteFooter />
 
       <CreateTournamentDialog open={createOpen} onClose={() => setCreateOpen(false)} category={categoryFilter === 'ALL' ? null : categoryById(categoryFilter)} />
       {editing && <EditTournamentDialog open onClose={() => setEditingId(null)} tournament={editing} />}

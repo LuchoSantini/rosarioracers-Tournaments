@@ -16,6 +16,7 @@ import CategoryDialog from '../components/CategoryDialog';
 import { useConfirm } from '../components/ConfirmProvider';
 import ManageTabs from '../components/ManageTabs';
 import PageBackground from '../components/PageBackground';
+import SiteFooter from '../components/SiteFooter';
 import PanelCard from '../components/PanelCard';
 import SortableList, { SortableItem } from '../components/SortableList';
 
@@ -152,6 +153,8 @@ export default function CategoriesPage() {
           </SortableList>
         </PanelCard>
       </Box>
+
+      <SiteFooter />
 
       <CategoryDialog open={dialog !== null} onClose={() => setDialog(null)} category={dialog === 'new' ? null : dialog} />
     </Box>

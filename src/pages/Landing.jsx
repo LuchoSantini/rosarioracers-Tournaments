@@ -14,6 +14,7 @@ import { roundProgress } from '../lib/tournament';
 import AppHeader from '../components/AppHeader';
 import LiveDot from '../components/LiveDot';
 import PageBackground from '../components/PageBackground';
+import SiteFooter from '../components/SiteFooter';
 
 const fromRight = keyframes`from { opacity: 0; transform: translateX(48px); } to { opacity: 1; transform: none; }`;
 const fromLeft = keyframes`from { opacity: 0; transform: translateX(-48px); } to { opacity: 1; transform: none; }`;
@@ -239,6 +240,7 @@ export default function Landing() {
             Usá las flechas ← → del teclado para cambiar de categoría
           </Typography>
         </Box>
+        <SiteFooter />
       </Box>
     </ThemeProvider>
   );

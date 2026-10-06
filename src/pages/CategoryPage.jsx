@@ -13,6 +13,7 @@ import { DISPLAY_FONT, makeTheme } from '../theme';
 import { useCategories, useCategoryTournaments, useStore } from '../store/StoreContext';
 import AppHeader from '../components/AppHeader';
 import PageBackground from '../components/PageBackground';
+import SiteFooter from '../components/SiteFooter';
 import ActiveTournamentPanel from '../components/ActiveTournamentPanel';
 import CreateTournamentDialog from '../components/CreateTournamentDialog';
 import EmptyTournament from '../components/EmptyTournament';
@@ -117,6 +118,8 @@ function CategoryPageContent({ category }) {
           <HistoryPanel history={viewHistory} type={view} />
         </Box>
       </Box>
+
+      <SiteFooter />
 
       <CreateTournamentDialog
         open={createType !== null}
