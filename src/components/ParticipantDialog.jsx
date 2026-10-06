@@ -1,7 +1,9 @@
 import { useRef } from 'react';
 import { Box, Chip, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import BallastIcon from '@mui/icons-material/FitnessCenterOutlined';
 import { formatLapTime } from '../lib/laptime';
+import { ballastOf, hasBallast } from '../lib/tournament';
 import { DISPLAY_FONT, MEDALS } from '../theme';
 import Flag from './Flag';
 import PositionBadge from './PositionBadge';
@@ -91,6 +93,9 @@ export default function ParticipantDialog({ row, tournament, totalParticipants, 
                       time={round.times?.[r.q2Group === 'B' ? 'q2B' : 'q2']?.[shown.participant.id]}
                     />
                     <ResultChip label={r.group ? `Final ${r.group}` : 'Final'} position={r.finalPos} points={r.finalPoints} />
+                    {hasBallast(tournament) && ballastOf(round, shown.participant.id) > 0 && (
+                      <Chip size="small" variant="outlined" color="primary" icon={<BallastIcon />} label={`Lastre ${ballastOf(round, shown.participant.id)} kg`} />
+                    )}
                   </Stack>
                 </Box>
               );

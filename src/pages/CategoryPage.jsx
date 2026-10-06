@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Link as RouterLink, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { Box, Button, IconButton, Stack, ThemeProvider, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import ListAltIcon from '@mui/icons-material/ListAltOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBackRounded';
 import PrevIcon from '@mui/icons-material/ArrowBackIosNewRounded';
 import NextIcon from '@mui/icons-material/ArrowForwardIosRounded';
@@ -48,26 +47,39 @@ function CategoryPageContent({ category }) {
       <PageBackground accent={category.accent} />
       <AppHeader />
 
-      <Box component="main" sx={{ px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 }, maxWidth: 1760, mx: 'auto' }}>
-        <Stack direction="row" spacing={{ xs: 1, md: 2 }} sx={{ alignItems: 'center', mb: { xs: 2, md: 3 } }}>
+      <Box component="main" sx={{ px: { xs: 2, md: 4 }, py: { xs: 2, md: 2 }, maxWidth: 1760, mx: 'auto' }}>
+        <Stack direction="row" useFlexGap spacing={{ xs: 1, md: 2 }} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1.5, mb: { xs: 1.5, md: 2 } }}>
           <Tooltip title="Todas las categorías">
             <IconButton component={RouterLink} to={`/?c=${category.slug}`} aria-label="Volver a las categorías" sx={{ border: 1, borderColor: 'divider' }}>
               <ArrowBackIcon />
             </IconButton>
           </Tooltip>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ flex: '1 1 240px', minWidth: 0 }}>
             <Typography
               component="h1"
               sx={{
                 fontFamily: DISPLAY_FONT, fontWeight: 800, fontStyle: 'italic', textTransform: 'uppercase',
-                fontSize: 'clamp(2.1rem, 5.2vw, 4.2rem)', lineHeight: 1,
+                fontSize: 'clamp(1.8rem, 3.4vw, 2.8rem)', lineHeight: 1,
               }}
             >
               <Box component="span" sx={{ color: 'text.secondary', fontWeight: 700 }}>Torneo </Box>
               {category.name}
             </Typography>
-            <Box sx={{ width: 120, height: 6, mt: 1, bgcolor: 'primary.main', transform: 'skewX(-24deg)' }} />
+            <Box sx={{ width: 100, height: 5, mt: 0.75, bgcolor: 'primary.main', transform: 'skewX(-24deg)' }} />
           </Box>
+          {editMode && <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateType(view)}>Nuevo torneo</Button>}
+          <ToggleButtonGroup exclusive size="small" color="primary" value={view} onChange={(_, next) => next && setView(next)} aria-label="Tipo de torneo">
+            <ToggleButton value="championship" sx={toggleSx}>
+              <FlagIcon fontSize="small" />
+              Campeonatos
+              {active && <LiveDot size={8} />}
+            </ToggleButton>
+            <ToggleButton value="hotlap" sx={toggleSx}>
+              <TimerIcon fontSize="small" />
+              Hot Laps
+              {activeHotLap && <LiveDot size={8} />}
+            </ToggleButton>
+          </ToggleButtonGroup>
           <Stack direction="row" spacing={1}>
             <Tooltip title={prev.name}>
               <IconButton component={RouterLink} to={`/categoria/${prev.slug}${viewSuffix}`} aria-label={`Ir a ${prev.name}`} sx={{ border: 1, borderColor: 'divider' }}>
@@ -82,27 +94,9 @@ function CategoryPageContent({ category }) {
           </Stack>
         </Stack>
 
-        <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap', alignItems: 'center', mb: { xs: 2, md: 3 } }}>
-          {editMode && <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateType(view)}>Nuevo torneo</Button>}
-          <Button component={RouterLink} to={`/torneos?c=${category.slug}`} color="inherit" startIcon={<ListAltIcon />}>Gestionar torneos</Button>
-          <Box sx={{ flex: 1 }} />
-          <ToggleButtonGroup exclusive size="small" color="primary" value={view} onChange={(_, next) => next && setView(next)} aria-label="Tipo de torneo">
-            <ToggleButton value="championship" sx={toggleSx}>
-              <FlagIcon fontSize="small" />
-              Campeonatos
-              {active && <LiveDot size={8} />}
-            </ToggleButton>
-            <ToggleButton value="hotlap" sx={toggleSx}>
-              <TimerIcon fontSize="small" />
-              Hot Laps
-              {activeHotLap && <LiveDot size={8} />}
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Stack>
-
         {view === 'championship' ? (
           // Tabla de posiciones (70%) a la izquierda y pistas (30%) a la derecha (se apilan en pantallas chicas).
-          <Box sx={{ display: 'grid', gap: { xs: 2, md: 3 }, gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 3fr)' }, alignItems: 'start' }}>
+          <Box sx={{ display: 'grid', gap: { xs: 2, md: 3 }, gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 7fr) minmax(0, 3fr)' }, alignItems: 'stretch' }}>
             <ActiveTournamentPanel category={category} tournament={active} onCreate={setCreateType} />
           </Box>
         ) : activeHotLap ? (

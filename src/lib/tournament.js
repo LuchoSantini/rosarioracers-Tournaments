@@ -33,7 +33,17 @@ export const emptyResults = () => ({ q1: [], q2: [], q2B: [], finalA: [], finalB
 // Sesiones de clasificación: además del orden de llegada se pueden cargar los tiempos de vuelta (round.times).
 export const TIMED_SESSIONS = ['q1', 'q2', 'q2B'];
 
-export const createRound = (track) => ({ id: uid(), track, results: emptyResults(), times: { q1: {}, q2: {}, q2B: {} } });
+// `ballast` = lastre de la fecha en kg por participante ({ participantId: kg }); sólo se usa en torneos con lastre.
+export const createRound = (track) => ({ id: uid(), track, results: emptyResults(), times: { q1: {}, q2: {}, q2B: {} }, ballast: {} });
+
+// Lastre (kg) que se puede asignar a un participante en una fecha.
+export const MAX_BALLAST = 999;
+
+// Torneos con lastre: sólo campeonatos, y los guardados antes de existir el lastre no tienen `ballast`.
+export const hasBallast = (tournament) => Boolean(tournament.ballast) && !isHotLap(tournament);
+
+// Lastre (kg) de un participante en una fecha; 0 si no tiene.
+export const ballastOf = (round, participantId) => round.ballast?.[participantId] ?? 0;
 
 // Tipos de torneo:
 //   championship = campeonato por fechas (clasificaciones + finales, suma de puntos).
@@ -53,7 +63,7 @@ export const activeOf = (tournaments, categoryId, type, exceptId = null) =>
     (t) => t.categoryId === categoryId && t.status === 'active' && (t.type ?? 'championship') === type && t.id !== exceptId,
   ) ?? null;
 
-export function createTournament({ categoryId, name, game, tracks, scoring, type = 'championship' }) {
+export function createTournament({ categoryId, name, game, tracks, scoring, type = 'championship', ballast = false }) {
   const rounds = tracks.map(createRound);
   if (type === 'hotlap') rounds.forEach((round) => { round.laps = {}; });
   return {
@@ -66,6 +76,7 @@ export function createTournament({ categoryId, name, game, tracks, scoring, type
     createdAt: new Date().toISOString(),
     finishedAt: null,
     scoring: cloneScoring(scoring),
+    ballast: type === 'championship' && Boolean(ballast),
     participants: [],
     rounds,
   };

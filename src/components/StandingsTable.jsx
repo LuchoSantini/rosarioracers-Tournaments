@@ -6,7 +6,7 @@ import { alpha } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import CloseIcon from '@mui/icons-material/Close';
 import { computeStandings } from '../lib/standings';
-import { roundStatuses } from '../lib/tournament';
+import { ballastOf, hasBallast, roundStatuses } from '../lib/tournament';
 import { DISPLAY_FONT, MEDALS, PERFECT_COLOR } from '../theme';
 import Flag from './Flag';
 import LiveDot from './LiveDot';
@@ -18,7 +18,9 @@ import PositionBadge from './PositionBadge';
 const ACTIONS_WIDTH = 84;
 const sticky = { position: 'sticky', zIndex: 2, bgcolor: 'background.paper' };
 const stickyPos = { ...sticky, left: 0, width: 56, minWidth: 56 };
-const stickyName = { ...sticky, left: 56, width: 210, minWidth: 210, boxShadow: '6px 0 8px -6px rgba(0,0,0,0.7)' };
+const BALLAST_WIDTH = 78;
+const stickyName = (withBallast) => ({ ...sticky, left: 56, width: 210, minWidth: 210, ...(!withBallast && { boxShadow: '6px 0 8px -6px rgba(0,0,0,0.7)' }) });
+const stickyBallast = { ...sticky, left: 266, width: BALLAST_WIDTH, minWidth: BALLAST_WIDTH, px: 1, boxShadow: '6px 0 8px -6px rgba(0,0,0,0.7)' };
 const stickyTotal = (editable) => ({ ...sticky, right: editable ? ACTIONS_WIDTH : 0, minWidth: 72, boxShadow: '-6px 0 8px -6px rgba(0,0,0,0.7)' });
 const stickyActions = { ...sticky, right: 0, width: ACTIONS_WIDTH, minWidth: ACTIONS_WIDTH, px: 0.5 };
 
@@ -78,7 +80,10 @@ export default function StandingsTable({ tournament, onRename, onRemove }) {
 
   // Fecha que se está disputando: la primera sin completar (en disputa o la que sigue).
   const statuses = useMemo(() => roundStatuses(tournament), [tournament]);
-  const currentId = tournament.rounds.find((r) => statuses[r.id] === 'live' || statuses[r.id] === 'next')?.id ?? null;
+  const currentRound = tournament.rounds.find((r) => statuses[r.id] === 'live' || statuses[r.id] === 'next') ?? null;
+  const currentId = currentRound?.id ?? null;
+  // Torneos con lastre: columna fija con el lastre (kg) que lleva cada uno en la fecha que se está disputando.
+  const withBallast = hasBallast(tournament) && currentRound !== null;
   const hasRows = rows.length > 0;
   const boxRef = useRef(null);
 
@@ -87,10 +92,10 @@ export default function StandingsTable({ tournament, onRename, onRemove }) {
   useEffect(() => {
     const box = boxRef.current;
     const column = box?.querySelector('[data-current="true"]');
-    const nameColumn = box?.querySelector('[data-col="name"]');
-    if (!column || !nameColumn) return;
-    box.scrollLeft += column.getBoundingClientRect().left - nameColumn.getBoundingClientRect().right;
-  }, [currentId, tournament.id, hasRows]);
+    const lastFixed = box?.querySelector('[data-col="ballast"]') ?? box?.querySelector('[data-col="name"]');
+    if (!column || !lastFixed) return;
+    box.scrollLeft += column.getBoundingClientRect().left - lastFixed.getBoundingClientRect().right;
+  }, [currentId, tournament.id, hasRows, withBallast]);
 
   if (rows.length === 0) {
     return (
@@ -105,11 +110,18 @@ export default function StandingsTable({ tournament, onRename, onRemove }) {
   return (
     <>
       <TableContainer ref={boxRef}>
-        <Table size="small" aria-label="Tabla de posiciones">
+        <Table size="small" aria-label="Tabla de posiciones" sx={{ "& tbody td": { py: 0.25 } }}>
           <TableHead>
             <TableRow>
               <TableCell className="sticky-cell" sx={stickyPos}>Pos</TableCell>
-              <TableCell className="sticky-cell" data-col="name" sx={stickyName}>Participante</TableCell>
+              <TableCell className="sticky-cell" data-col="name" sx={stickyName(withBallast)}>Participante</TableCell>
+              {withBallast && (
+                <TableCell className="sticky-cell" data-col="ballast" align="center" sx={stickyBallast}>
+                  <Tooltip title={`Lastre para la fecha ${tournament.rounds.indexOf(currentRound) + 1} · ${currentRound.track.name}`}>
+                    <span>Lastre</span>
+                  </Tooltip>
+                </TableCell>
+              )}
               {tournament.rounds.map((round, i) => {
                 const current = round.id === currentId;
                 const note = current ? (statuses[round.id] === 'live' ? ' · en disputa' : ' · próxima') : '';
@@ -160,10 +172,21 @@ export default function StandingsTable({ tournament, onRename, onRemove }) {
                 }}
                 sx={{ cursor: 'pointer', '&:hover > .sticky-cell': { bgcolor: '#181b22' } }}
               >
-                <TableCell className="sticky-cell" sx={stickyPos}><PositionBadge position={row.position} /></TableCell>
-                <TableCell className="sticky-cell" sx={stickyName}>
-                  <Typography sx={{ fontWeight: 600, fontSize: '1.02rem' }}>{row.participant.name}</Typography>
+                <TableCell className="sticky-cell" sx={stickyPos}><PositionBadge position={row.position} size={24} /></TableCell>
+                <TableCell className="sticky-cell" sx={stickyName(withBallast)}>
+                  <Typography sx={{ fontWeight: 600, fontSize: "1rem", lineHeight: 1.3 }}>{row.participant.name}</Typography>
                 </TableCell>
+                {withBallast && (
+                  <TableCell className="sticky-cell" align="center" sx={stickyBallast}>
+                    {ballastOf(currentRound, row.participant.id) > 0 ? (
+                      <Box component="span" sx={{ fontFamily: DISPLAY_FONT, fontWeight: 700, color: 'primary.main', whiteSpace: 'nowrap' }}>
+                        {ballastOf(currentRound, row.participant.id)} kg
+                      </Box>
+                    ) : (
+                      <Box component="span" sx={{ color: 'text.disabled' }}>–</Box>
+                    )}
+                  </TableCell>
+                )}
                 {row.rounds.map((r, i) => {
                   const played = r.q1Pos || r.q2Pos || r.finalPos;
                   const current = tournament.rounds[i].id === currentId;
@@ -177,7 +200,7 @@ export default function StandingsTable({ tournament, onRename, onRemove }) {
                     </TableCell>
                   );
                 })}
-                <TableCell align="right" className="sticky-cell" sx={{ ...stickyTotal(editable), fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: '1.4rem', color: row.position === 1 ? MEDALS[1] : 'text.primary' }}>
+                <TableCell align="right" className="sticky-cell" sx={{ ...stickyTotal(editable), fontFamily: DISPLAY_FONT, fontWeight: 800, fontSize: "1.25rem", lineHeight: 1.3, color: row.position === 1 ? MEDALS[1] : 'text.primary' }}>
                   {row.total}
                 </TableCell>
                 {editable && (

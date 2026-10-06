@@ -101,6 +101,8 @@ export function StoreProvider({ children }) {
       setLap: (id, participantId, ms) => dispatch({ type: 'lap/set', id, participantId, ms }),
       setTime: (id, roundId, session, participantId, ms) => dispatch({ type: 'time/set', id, roundId, session, participantId, ms }),
       sortByTime: (id, roundId, session) => dispatch({ type: 'result/sortByTime', id, roundId, session }),
+      setBallast: (id, roundId, participantId, kg) => dispatch({ type: 'ballast/set', id, roundId, participantId, kg }),
+      replaceBallast: (id, roundId, ballast) => dispatch({ type: 'ballast/replace', id, roundId, ballast }),
       createCategory: (category) => dispatch({ type: 'category/create', category }),
       updateCategory: (id, patch) => dispatch({ type: 'category/update', id, patch }),
       deleteCategory: (id) => dispatch({ type: 'category/delete', id }),

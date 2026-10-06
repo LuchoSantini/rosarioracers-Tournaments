@@ -14,10 +14,11 @@ import SortIcon from '@mui/icons-material/SortRounded';
 import { formatGap, parseLapTime, sortByTimes } from '../lib/laptime';
 import { TIME_HINT, timeHintSx } from '../lib/timeInput';
 import { pointsForPosition } from '../lib/scoring';
-import { FINAL_SOURCE, MAX_FINAL_SIZE, SESSIONS, SESSION_PAIR, TIMED_SESSIONS, groupASize } from '../lib/tournament';
+import { FINAL_SOURCE, MAX_FINAL_SIZE, SESSIONS, SESSION_PAIR, TIMED_SESSIONS, groupASize, hasBallast } from '../lib/tournament';
 import { DISPLAY_FONT, MEDALS } from '../theme';
 import { useStore } from '../store/StoreContext';
 import { useConfirm } from './ConfirmProvider';
+import BallastPanel from './BallastPanel';
 import Flag from './Flag';
 import SortableList, { SortableItem } from './SortableList';
 import TimeField from './TimeField';
@@ -95,30 +96,7 @@ function PendingTimeRow({ participant, disabled = false, onAdd, onAddedWithKeybo
   );
 }
 
-// Puntos que suma cada posición (P1, P2, P3…) en la sesión que se está cargando. `offset` corre la tabla: en la Final B
-// el P1 suma los puntos del puesto siguiente al último de la Final A. P1, P2 y P3 llevan oro, plata y bronce.
-function PointsStrip({ rule, offset = 0, count }) {
-  return (
-    <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexShrink: 0, mb: 1.5 }}>
-      <Typography variant="overline" color="text.secondary" sx={{ flexShrink: 0 }}>Puntos por posición</Typography>
-      <Box sx={{ display: 'flex', gap: 0.75, overflowX: 'auto', pb: 0.75, flex: 1, minWidth: 0 }}>
-        {Array.from({ length: count }, (_, i) => {
-          const position = i + 1;
-          const medal = MEDALS[position];
-          return (
-            <Chip
-              key={position}
-              size="small"
-              variant={medal ? 'filled' : 'outlined'}
-              sx={{ flexShrink: 0, ...(medal && { bgcolor: medal, color: '#000', fontWeight: 700 }) }}
-              label={<><span style={{ opacity: 0.7 }}>P{position}</span>&nbsp;<b style={{ fontFamily: DISPLAY_FONT, fontSize: '1.05em' }}>+{pointsForPosition(rule, position + offset)}</b></>}
-            />
-          );
-        })}
-      </Box>
-    </Stack>
-  );
-}
+const BALLAST_TAB = 'ballast';
 
 // Carga de resultados. Finales: se toca a cada participante en el orden en que llegó. Clasificaciones: además se
 // pueden cargar los tiempos y la tabla se ordena sola por mejor tiempo. Todo se guarda al instante.
@@ -152,7 +130,8 @@ export default function ResultsDialog({ open, onClose, tournament, initialRoundI
   // Sólo en la Final B y mientras la Final A está vacía: el corrimiento sale de los clasificados en la Clasificación 2 A.
   const offsetFromQualified = isFinalB && (round.results.finalA ?? []).length === 0 && pointsOffset > 0;
   const rule = tournament.scoring[isFinalB ? 'finalA' : sessionKey === 'q2B' ? 'q2' : sessionKey];
-  const sessionLabel = SESSIONS.find((s) => s.key === sessionKey).label;
+  const isBallast = sessionKey === BALLAST_TAB; // pestaña del lastre: no es una sesión con resultados
+  const sessionLabel = SESSIONS.find((s) => s.key === sessionKey)?.label;
   const timed = TIMED_SESSIONS.includes(sessionKey);
   const times = round.times?.[sessionKey] ?? {};
   const timeValues = Object.values(times);
@@ -174,15 +153,6 @@ export default function ResultsDialog({ open, onClose, tournament, initialRoundI
   const placed = new Set(order);
   const inOtherGroup = new Set(otherGroup);
   const pool = participants.filter((p) => !placed.has(p.id) && !inOtherGroup.has(p.id) && (!restricted || eligible.has(p.id)));
-
-  // Cuántas posiciones mostrar en la franja de puntos: todos en la Clasificación 1; en los grupos, hasta 12 (en los B,
-  // los que quedan fuera del grupo A; en las finales, los que clasificaron).
-  const isSecondGroup = sessionKey === 'q2B' || isFinalB;
-  const expectedCount = !pairKey
-    ? participants.length
-    : restricted
-      ? Math.min(MAX_FINAL_SIZE, qualified.length)
-      : Math.min(MAX_FINAL_SIZE, isSecondGroup ? Math.max(participants.length - otherGroup.length, 0) : participants.length);
 
   const save = (next) => actions.setResult(tournament.id, round.id, sessionKey, next);
   const add = (id) => save([...order, id]);
@@ -258,14 +228,25 @@ export default function ResultsDialog({ open, onClose, tournament, initialRoundI
               />
             );
           })}
+          {hasBallast(tournament) && (
+            <Tab
+              value={BALLAST_TAB}
+              label={
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <span>Lastre</span>
+                  <Chip size="small" color={Object.keys(round.ballast ?? {}).length ? 'primary' : 'default'} label={Object.keys(round.ballast ?? {}).length} />
+                </Stack>
+              }
+            />
+          )}
         </Tabs>
-
-        {participants.length > 0 && expectedCount > 0 && <PointsStrip rule={rule} offset={pointsOffset} count={expectedCount} />}
 
         {participants.length === 0 ? (
           <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
             Primero agregá participantes al torneo.
           </Typography>
+        ) : isBallast ? (
+          <BallastPanel tournament={tournament} round={round} roundIndex={tournament.rounds.indexOf(round)} />
         ) : (
           <Box sx={{ flex: 1, minHeight: 0, display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 1.25fr' }, gridTemplateRows: { md: 'minmax(0, 1fr)' }, overflowY: { xs: 'auto', md: 'hidden' } }}>
             <Box ref={pendingRef} sx={{ minHeight: 0, overflowY: { md: 'auto' }, pr: { md: 0.5 } }}>

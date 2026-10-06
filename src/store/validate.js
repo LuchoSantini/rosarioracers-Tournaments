@@ -24,14 +24,17 @@ export function isValidState(value) {
 
 // Completa datos viejos: sin categorías guardadas (o con la lista vacía) se usan las iniciales, y las fechas guardadas
 // antes de existir la Clasificación 2 B reciben ese grupo vacío (así el resto del código puede dar por hecho que existe).
+// Lo mismo con el lastre: los torneos viejos no lo usan y sus fechas no tienen lastre cargado.
 export function normalizeState(state) {
   const categories = Array.isArray(state.categories) && state.categories.length > 0 ? state.categories : DEFAULT_CATEGORIES;
   const tournaments = state.tournaments.map((t) => ({
     ...t,
+    ballast: Boolean(t.ballast),
     rounds: t.rounds.map((round) => ({
       ...round,
       results: { q2B: [], ...round.results },
       times: { q1: {}, q2: {}, q2B: {}, ...round.times },
+      ballast: { ...round.ballast },
     })),
   }));
   return { ...state, categories, tournaments };

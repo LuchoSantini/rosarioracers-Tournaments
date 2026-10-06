@@ -53,7 +53,7 @@ export default function TracksPanel({ tournament, onOpenResults, onAddTrack }) {
   );
 
   return (
-    <PanelCard sx={{ position: { md: 'sticky' }, top: { md: 16 } }}>
+    <PanelCard sx={{ display: 'flex', flexDirection: 'column' }}>
       <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <Typography variant="h3" component="h2" sx={{ fontSize: { xs: '2rem', md: '2.1rem', xl: '2.6rem' } }}>Pistas</Typography>
@@ -69,7 +69,9 @@ export default function TracksPanel({ tournament, onOpenResults, onAddTrack }) {
         </Typography>
       </Stack>
 
-      <Box ref={listRef} sx={{ position: 'relative', maxHeight: { md: 'calc(100vh - 230px)' }, overflowY: 'auto', pr: { md: 0.5 } }}>
+      {/* En pantalla grande la tarjeta toma el alto de la tabla de posiciones y la lista se desplaza adentro. */}
+      <Box sx={{ position: 'relative', flex: { md: '1 1 0' }, minHeight: { md: 280 } }}>
+      <Box ref={listRef} sx={{ position: { xs: 'relative', md: 'absolute' }, inset: { md: 0 }, overflowY: { md: 'auto' }, pr: { md: 0.5 } }}>
         <SortableList ids={ids} onReorder={reorder} disabled={!editMode}>
           <Stack spacing={1.25}>
             {tournament.rounds.map((round, i) => {
@@ -94,6 +96,7 @@ export default function TracksPanel({ tournament, onOpenResults, onAddTrack }) {
             })}
           </Stack>
         </SortableList>
+      </Box>
       </Box>
     </PanelCard>
   );

@@ -1,7 +1,7 @@
 import { computeStandings } from './standings';
 import { hotLapStandings } from './hotlap';
 import { formatGap, formatLapTime } from './laptime';
-import { isHotLap, roundStatuses } from './tournament';
+import { ballastOf, hasBallast, isHotLap, roundStatuses } from './tournament';
 import { BRAND_YELLOW, MEDALS } from '../theme';
 
 // Imagen resumida de una tabla de posiciones (campeonato o Hot Lap), dibujada en un canvas y abierta en una pestaña nueva.
@@ -41,6 +41,12 @@ function setSpacing(ctx, px) {
   if ('letterSpacing' in ctx) ctx.letterSpacing = `${px}px`;
 }
 
+// Fecha que se está disputando: la primera sin completar.
+function currentRound(tournament) {
+  const statuses = roundStatuses(tournament);
+  return tournament.rounds.find((r) => statuses[r.id] === 'live' || statuses[r.id] === 'next') ?? null;
+}
+
 // Filas normalizadas según el tipo de torneo: { pos, name, main, sub, leader, medal }.
 function buildRows(tournament) {
   if (isHotLap(tournament)) {
@@ -55,9 +61,17 @@ function buildRows(tournament) {
       })),
     };
   }
+  // Con lastre se agrega la columna del lastre (kg) de la fecha que se está disputando.
+  const current = hasBallast(tournament) ? currentRound(tournament) : null;
+  const withBallast = current !== null && Object.keys(current.ballast ?? {}).length > 0;
   return {
-    columns: { main: 'PUNTOS', sub: null },
-    rows: computeStandings(tournament).map((row) => ({ pos: row.position, name: row.participant.name, main: String(row.total), sub: null })),
+    columns: { main: 'PUNTOS', sub: withBallast ? `LASTRE F${tournament.rounds.indexOf(current) + 1}` : null },
+    rows: computeStandings(tournament).map((row) => ({
+      pos: row.position,
+      name: row.participant.name,
+      main: String(row.total),
+      sub: withBallast && ballastOf(current, row.participant.id) > 0 ? `${ballastOf(current, row.participant.id)} kg` : '',
+    })),
   };
 }
 

@@ -1,7 +1,7 @@
 import { DEFAULT_CATEGORIES } from '../data/categories';
 import { sortByTimes } from '../lib/laptime';
 import { normalizeState } from './validate';
-import { FINAL_SOURCE, MAX_FINAL_SIZE, SESSION_PAIR, TIMED_SESSIONS, createRound, isHotLap, uid } from '../lib/tournament';
+import { FINAL_SOURCE, MAX_BALLAST, MAX_FINAL_SIZE, SESSION_PAIR, TIMED_SESSIONS, createRound, isHotLap, uid } from '../lib/tournament';
 
 export const initialState = { version: 1, categories: DEFAULT_CATEGORIES, tournaments: [] };
 
@@ -106,6 +106,7 @@ export function reducer(state, action) {
           times: Object.fromEntries(
             Object.entries(round.times ?? {}).map(([key, byId]) => [key, Object.fromEntries(Object.entries(byId).filter(([id]) => id !== action.participantId))]),
           ),
+          ballast: Object.fromEntries(Object.entries(round.ballast ?? {}).filter(([id]) => id !== action.participantId)),
           ...(round.laps ? { laps: Object.fromEntries(Object.entries(round.laps).filter(([id]) => id !== action.participantId)) } : {}),
         })),
       }));
@@ -195,6 +196,33 @@ export function reducer(state, action) {
           if (!TIMED_SESSIONS.includes(action.session)) return round;
           const order = sortByTimes(round.results[action.session] ?? [], round.times?.[action.session] ?? {});
           return { ...round, results: { ...round.results, [action.session]: order } };
+        }),
+      );
+
+    // Lastre de una fecha: kg por participante (0 o null lo quita). Sólo participantes del torneo y enteros de 0 a MAX_BALLAST.
+    case 'ballast/set':
+      return updateTournament(state, action.id, (t) =>
+        mapRound(t, action.roundId, (round) => {
+          if (!t.participants.some((p) => p.id === action.participantId)) return round;
+          const ballast = { ...round.ballast };
+          const kg = Math.min(MAX_BALLAST, Math.round(Number(action.kg)));
+          if (action.kg == null || !(kg > 0)) delete ballast[action.participantId];
+          else ballast[action.participantId] = kg;
+          return { ...round, ballast };
+        }),
+      );
+
+    // Reemplaza todo el lastre de una fecha ({ participantId: kg }); sirve para aplicar una propuesta o vaciarlo.
+    case 'ballast/replace':
+      return updateTournament(state, action.id, (t) =>
+        mapRound(t, action.roundId, (round) => {
+          const known = new Set(t.participants.map((p) => p.id));
+          const ballast = {};
+          for (const [id, value] of Object.entries(action.ballast ?? {})) {
+            const kg = Math.min(MAX_BALLAST, Math.round(Number(value)));
+            if (known.has(id) && kg > 0) ballast[id] = kg;
+          }
+          return { ...round, ballast };
         }),
       );
 
