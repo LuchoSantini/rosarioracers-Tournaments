@@ -8,6 +8,7 @@ import NextIcon from '@mui/icons-material/ArrowForwardIosRounded';
 import FlagIcon from '@mui/icons-material/FlagOutlined';
 import TimerIcon from '@mui/icons-material/TimerOutlined';
 import { isHotLap } from '../lib/tournament';
+import useFullscreen from '../lib/useFullscreen';
 import { DISPLAY_FONT, makeTheme } from '../theme';
 import { useCategories, useCategoryTournaments, useStore } from '../store/StoreContext';
 import AppHeader from '../components/AppHeader';
@@ -38,6 +39,9 @@ function CategoryPageContent({ category }) {
   const prev = categories[(index - 1 + categories.length) % categories.length];
   const next = categories[(index + 1) % categories.length];
 
+  // En pantalla completa la primera pantalla termina con un espacio (donde va el crédito) y el histórico queda más abajo.
+  const fullscreen = useFullscreen();
+
   const toggleSx = { px: 2, gap: 1, fontFamily: DISPLAY_FONT, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' };
 
   return (
@@ -45,9 +49,10 @@ function CategoryPageContent({ category }) {
       sx={{ position: 'relative', zIndex: 0, minHeight: '100vh' }}
     >
       <PageBackground accent={category.accent} />
+      <Box sx={fullscreen ? { minHeight: '100vh', display: 'flex', flexDirection: 'column' } : undefined}>
       <AppHeader />
 
-      <Box component="main" sx={{ px: { xs: 2, md: 4 }, py: { xs: 2, md: 2 }, maxWidth: 1760, mx: 'auto' }}>
+      <Box component="main" sx={{ px: { xs: 2, md: 4 }, pt: { xs: 2, md: fullscreen ? 1 : 2 }, pb: fullscreen ? 0 : { xs: 2, md: 2 }, maxWidth: 1760, mx: 'auto', width: '100%', flex: fullscreen ? 1 : undefined }}>
         <Stack direction="row" useFlexGap spacing={{ xs: 1, md: 2 }} sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 1.5, mb: { xs: 1.5, md: 2 } }}>
           <Tooltip title="Todas las categorías">
             <IconButton component={RouterLink} to={`/?c=${category.slug}`} aria-label="Volver a las categorías" sx={{ border: 1, borderColor: 'divider' }}>
@@ -107,13 +112,16 @@ function CategoryPageContent({ category }) {
           </Box>
         )}
 
-        {/* Abajo del todo y a lo ancho: el histórico del tipo de torneo que se está viendo. */}
-        <Box sx={{ mt: { xs: 2, md: 3 } }}>
-          <HistoryPanel history={viewHistory} type={view} />
-        </Box>
+      </Box>
+      {fullscreen && <SiteFooter compact />}
       </Box>
 
-      <SiteFooter />
+      {/* Abajo del todo y a lo ancho: el histórico del tipo de torneo que se está viendo. */}
+      <Box component="main" sx={{ px: { xs: 2, md: 4 }, pb: { xs: 2, md: 2 }, pt: fullscreen ? 3 : { xs: 0, md: 1 }, maxWidth: 1760, mx: 'auto' }}>
+        <HistoryPanel history={viewHistory} type={view} />
+      </Box>
+
+      {!fullscreen && <SiteFooter />}
 
       <CreateTournamentDialog
         open={createType !== null}
