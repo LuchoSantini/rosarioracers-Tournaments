@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
-  Alert, Autocomplete, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField,
-  Typography, useMediaQuery,
+  Alert, Autocomplete, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem, Stack,
+  Switch, TextField, Typography, useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { GAMES } from '../data/games';
@@ -21,6 +21,7 @@ export default function EditTournamentDialog({ open, onClose, tournament }) {
   const [game, setGame] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [scoring, setScoring] = useState(null);
+  const [ballast, setBallast] = useState(false);
 
   const hotlap = isHotLap(tournament);
 
@@ -30,6 +31,7 @@ export default function EditTournamentDialog({ open, onClose, tournament }) {
     setGame(tournament.game);
     setCategoryId(tournament.categoryId);
     setScoring(cloneScoring(tournament.scoring));
+    setBallast(Boolean(tournament.ballast));
   }, [open, tournament]);
 
   // Un torneo en curso no puede pasar a una categoría que ya tiene otro en curso del mismo tipo.
@@ -40,7 +42,10 @@ export default function EditTournamentDialog({ open, onClose, tournament }) {
 
   const save = () => {
     const patch = { name: name.trim(), game: game.trim(), categoryId };
-    if (!hotlap) patch.scoring = scoring;
+    if (!hotlap) {
+      patch.scoring = scoring;
+      patch.ballast = ballast;
+    }
     actions.updateTournament(tournament.id, patch);
     onClose();
   };
@@ -71,6 +76,20 @@ export default function EditTournamentDialog({ open, onClose, tournament }) {
               <Alert severity="warning">
                 Esa categoría ya tiene un {typeLabel(tournament)} en curso ("{clash.name}"). Finalizalo antes de mover este torneo.
               </Alert>
+            )}
+            {!hotlap && (
+              <FormControlLabel
+                sx={{ m: 0 }}
+                control={<Switch checked={ballast} onChange={(e) => setBallast(e.target.checked)} sx={{ mr: 1 }} />}
+                label={
+                  <>
+                    <Typography sx={{ fontWeight: 600 }}>Se corre con lastre</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      El lastre es por fecha. Si lo desactivás, el lastre ya cargado se conserva pero deja de mostrarse.
+                    </Typography>
+                  </>
+                }
+              />
             )}
             {!hotlap && (
               <>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
-  Alert, Autocomplete, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, Step,
-  StepLabel, Stepper, TextField, ToggleButton, ToggleButtonGroup, Typography, useMediaQuery,
+  Alert, Autocomplete, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, MenuItem,
+  Stack, Step, StepLabel, Stepper, Switch, TextField, ToggleButton, ToggleButtonGroup, Typography, useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { GAMES } from '../data/games';
@@ -34,6 +34,7 @@ export default function CreateTournamentDialog({ open, onClose, onCreated, categ
   const [nameEdited, setNameEdited] = useState(false);
   const [tracks, setTracks] = useState([]);
   const [scoring, setScoring] = useState(() => cloneScoring(F1_SCORING));
+  const [ballast, setBallast] = useState(false);
 
   const selectedCategory = categoryById(categoryId);
   const steps = STEPS[type];
@@ -51,6 +52,7 @@ export default function CreateTournamentDialog({ open, onClose, onCreated, categ
     setNameEdited(false);
     setTracks([]);
     setScoring(cloneScoring(F1_SCORING));
+    setBallast(false);
   }, [open, category, initialType]);
 
   // Mientras no se escriba un nombre propio, el sugerido sigue a la categoría y al tipo elegidos.
@@ -69,7 +71,7 @@ export default function CreateTournamentDialog({ open, onClose, onCreated, categ
   const canContinue = step === 0 ? game.trim() && name.trim() && !running : step === 1 ? tracks.length > 0 : true;
 
   const submit = () => {
-    const tournament = createTournament({ categoryId, name: name.trim(), game: game.trim(), tracks, scoring, type });
+    const tournament = createTournament({ categoryId, name: name.trim(), game: game.trim(), tracks, scoring, type, ballast });
     actions.createTournament(tournament);
     onCreated?.(tournament);
     onClose();
@@ -124,6 +126,22 @@ export default function CreateTournamentDialog({ open, onClose, onCreated, categ
               renderInput={(params) => <TextField {...params} label="Juego" autoFocus required helperText="Elegí uno de la lista o escribí otro" />}
             />
             <TextField label="Nombre del torneo" value={name} onChange={(e) => { setName(e.target.value); setNameEdited(true); }} required />
+            {type === 'championship' && (
+              <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, px: 2, py: 0.5 }}>
+                <FormControlLabel
+                  sx={{ m: 0, width: '100%', alignItems: 'flex-start', py: 0.75 }}
+                  control={<Switch checked={ballast} onChange={(e) => setBallast(e.target.checked)} sx={{ mr: 1 }} />}
+                  label={
+                    <Box>
+                      <Typography sx={{ fontWeight: 600 }}>Se corre con lastre</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        El lastre es por fecha: antes de cada carrera se asignan los kilos a quien corresponda, a cualquier participante.
+                      </Typography>
+                    </Box>
+                  }
+                />
+              </Box>
+            )}
             <Typography variant="body2" color="text.secondary">
               {type === 'hotlap'
                 ? 'Después elegís la pista. Se ordena por la mejor vuelta de cada participante.'

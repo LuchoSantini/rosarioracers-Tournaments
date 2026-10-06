@@ -10,8 +10,10 @@ import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsportsOutlined';
 import ScoreboardIcon from '@mui/icons-material/ScoreboardOutlined';
 import CheckIcon from '@mui/icons-material/CheckCircleOutlined';
+import InfoIcon from '@mui/icons-material/InfoOutlined';
+import BallastIcon from '@mui/icons-material/FitnessCenterOutlined';
 import { computeStandings } from '../lib/standings';
-import { hasAnyResults, roundProgress } from '../lib/tournament';
+import { hasAnyResults, hasBallast, roundProgress } from '../lib/tournament';
 import { useStore } from '../store/StoreContext';
 import { useConfirm } from './ConfirmProvider';
 import EmptyTournament from './EmptyTournament';
@@ -24,6 +26,7 @@ import ParticipantAdder from './ParticipantAdder';
 import ResultsDialog from './ResultsDialog';
 import AddTracksDialog from './AddTracksDialog';
 import EditTournamentDialog from './EditTournamentDialog';
+import ScoringInfoDialog from './ScoringInfoDialog';
 
 function RenameDialog({ participant, tournament, onClose }) {
   const { actions } = useStore();
@@ -61,7 +64,7 @@ function RenameDialog({ participant, tournament, onClose }) {
 export default function ActiveTournamentPanel({ category, tournament, onCreate }) {
   const { actions, editMode } = useStore();
   const confirm = useConfirm();
-  const [dialog, setDialog] = useState(null); // 'results' | 'tracks' | 'edit'
+  const [dialog, setDialog] = useState(null); // 'results' | 'tracks' | 'edit' | 'scoring'
   const [focusRound, setFocusRound] = useState(null);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [renaming, setRenaming] = useState(null);
@@ -108,19 +111,19 @@ export default function ActiveTournamentPanel({ category, tournament, onCreate }
     <PanelCard>
       <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap' }} useFlexGap>
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h3" component="h2" sx={{ fontSize: { xs: '2rem', md: '2.6rem' } }}>{tournament.name}</Typography>
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 0.5 }}>
+          <Typography variant="h3" component="h2" sx={{ fontSize: { xs: '1.8rem', md: '2.2rem' } }}>{tournament.name}</Typography>
+          <Stack direction="row" useFlexGap spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap', mt: 0.5 }}>
             <LiveDot />
-            <Typography variant="overline" sx={{ color: 'success.light' }}>Torneo en curso</Typography>
-          </Stack>
-          <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap', mt: 1.5 }}>
-            <Chip icon={<SportsEsportsIcon />} label={tournament.game} variant="outlined" />
-            <Chip label={`${tournament.participants.length} participantes`} variant="outlined" />
+            <Typography variant="overline" sx={{ color: 'success.light', mr: 0.5 }}>Torneo en curso</Typography>
+            <Chip size="small" icon={<SportsEsportsIcon />} label={tournament.game} variant="outlined" />
+            <Chip size="small" label={`${tournament.participants.length} participantes`} variant="outlined" />
             <Chip
+              size="small"
               icon={completedRounds === tournament.rounds.length ? <CheckIcon /> : undefined}
               label={`${completedRounds}/${tournament.rounds.length} fechas completas`}
               variant="outlined"
             />
+            {hasBallast(tournament) && <Chip size="small" icon={<BallastIcon />} label="Con lastre" variant="outlined" color="primary" />}
           </Stack>
         </Box>
 
@@ -148,9 +151,10 @@ export default function ActiveTournamentPanel({ category, tournament, onCreate }
         )}
       </Stack>
 
-      <Stack direction="row" sx={{ mt: 3.5, mb: 1.25, justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 1 }}>
+      <Stack direction="row" sx={{ mt: 2.25, mb: 1, justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 1 }}>
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
           <Typography variant="h5" component="h3">Tabla de posiciones</Typography>
+          <Button size="small" variant="outlined" startIcon={<InfoIcon />} onClick={() => setDialog('scoring')}>Puntos</Button>
           {tournament.participants.length > 0 && <StandingsImageButton tournament={tournament} size="small" />}
         </Stack>
         {tournament.participants.length > 0 && (
@@ -171,6 +175,7 @@ export default function ActiveTournamentPanel({ category, tournament, onCreate }
     <ResultsDialog open={dialog === 'results'} onClose={closeDialog} tournament={tournament} initialRoundId={focusRound} />
     <AddTracksDialog open={dialog === 'tracks'} onClose={closeDialog} tournament={tournament} />
     <EditTournamentDialog open={dialog === 'edit'} onClose={closeDialog} tournament={tournament} />
+    <ScoringInfoDialog open={dialog === 'scoring'} onClose={closeDialog} tournament={tournament} />
     <RenameDialog key={renaming?.id ?? 'none'} participant={renaming} tournament={tournament} onClose={() => setRenaming(null)} />
     </>
   );
