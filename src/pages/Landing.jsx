@@ -132,7 +132,7 @@ export default function Landing() {
         <PageBackground accent={accent} />
         <AppHeader variant="hero" />
 
-        <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', px: { xs: 1.5, md: 4 }, pb: { xs: 3, md: 5 } }}>
+        <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', px: { xs: 1.5, md: 4 }, pb: { xs: 3, md: 2 } }}>
           <Box
             role="group"
             aria-roledescription="carrusel"
@@ -144,7 +144,7 @@ export default function Landing() {
               width: '100%',
               maxWidth: 1480,
               mx: 'auto',
-              minHeight: { xs: 360, md: 'clamp(380px, 50vh, 600px)' },
+              minHeight: { xs: 360, md: 'clamp(240px, calc(100vh - 540px), 600px)' },
               display: 'grid',
               gridTemplateColumns: 'auto minmax(0, 1fr) auto',
               alignItems: 'center',
@@ -167,7 +167,7 @@ export default function Landing() {
               component={RouterLink}
               to={`/categoria/${category.slug}`}
               aria-label={`Entrar a ${category.name}`}
-              sx={{ width: '100%', height: '100%', py: { xs: 3, md: 5 }, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
+              sx={{ width: '100%', height: '100%', py: { xs: 3, md: 3 }, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}
             >
               <Box key={category.id} sx={{ width: '100%', animation: `${direction > 0 ? fromRight : fromLeft} 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)` }}>
                 <Typography variant="overline" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
@@ -192,7 +192,7 @@ export default function Landing() {
                 <Box
                   component="span"
                   sx={{
-                    mt: { xs: 2.5, md: 4 },
+                    mt: { xs: 2.5, md: 3 },
                     display: 'inline-flex', alignItems: 'center', gap: 1,
                     px: 3.5, py: 1.1, borderRadius: 1,
                     bgcolor: 'primary.main', color: 'primary.contrastText',
